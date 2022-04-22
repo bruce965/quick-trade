@@ -1,0 +1,7 @@
+# Artifacts
+/src/*/bin
+/src/*/obj
+/src/**/*.*.user
+
+# Visual Studio Artifcats
+/.vs
