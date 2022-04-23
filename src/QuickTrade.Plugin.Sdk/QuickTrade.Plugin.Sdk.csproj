@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.Build.NoTargets/3.3.0">
 
+  <Import Project="..\Version.props" />
+
   <PropertyGroup>
+    <PackageVersion>$(QuickTradePackageVersion)</PackageVersion>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Description>MSBuild .NET Sdk QuickTrade plugins.</Description>
+    <Description>MSBuild .NET Sdk for QuickTrade plugins.</Description>
     <PackageTags>MSBuild MSBuildSdk</PackageTags>
     <ArtifactsPath>$(BaseArtifactsPath)$(MSBuildProjectName)\</ArtifactsPath>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -12,6 +15,10 @@
   <ItemGroup>
     <None Include="Sdk\Sdk.props" Pack="true" PackagePath="Sdk" />
     <None Include="Sdk\Sdk.targets" Pack="true" PackagePath="Sdk" />
+
+    <None Include="..\Version.props" Pack="true" PackagePath="Sdk">
+      <Link>Sdk\SdkVersion.props</Link>
+    </None>
   </ItemGroup>
 
 </Project>

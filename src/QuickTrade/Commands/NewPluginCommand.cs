@@ -3,9 +3,11 @@
 // available at https://github.com/bruce965/quick-trade/raw/master/LICENSE
 
 using QuickTrade.Configuration;
+using QuickTrade.Core.Abstractions;
 using QuickTrade.Options;
 using QuickTrade.Utilities;
 using System.CommandLine;
+using System.Reflection;
 using System.Text;
 using System.Xml;
 
@@ -97,7 +99,7 @@ class NewPluginCommand : Command
 		{
 			var lines = new[]
 			{
-				@"<Project Sdk=""QuickTrade.Plugin.Sdk/1.0.0"">",  // TODO: place version number somewhere else.
+				$@"<Project Sdk=""QuickTrade.Plugin.Sdk/{GetSdkVersion()}"">",
 				@"",
 				@"  <PropertyGroup>",
 				(pluginName == Path.GetFileNameWithoutExtension(csprojFile.FullName)) ? null : $@"    <AssemblyName>{EscapeXml(pluginName)}</AssemblyName>",
@@ -252,6 +254,15 @@ class NewPluginCommand : Command
 
 			stream.SetLength(stream.Position);
 		}
+	}
+
+	static string GetSdkVersion()
+	{
+		// assuming SDK version matches the core library version
+		var coreLibrary = typeof(UnixTimestamp).Assembly;
+		var coreVersion = coreLibrary.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
+		var split = coreVersion.Split('+', 2);
+		return split.First();
 	}
 
 	static string EnsureTrailingSlash(string path)

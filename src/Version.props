@@ -1,0 +1,11 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- This version identifier should only be updated when there are breaking changes. -->
+    <QuickTradeAssemblyVersion>0.1.0.0</QuickTradeAssemblyVersion>
+
+    <!-- This version identifier should respect Semantic Versioning 2.0.0. -->
+    <QuickTradePackageVersion>0.1.0-alpha</QuickTradePackageVersion>
+  </PropertyGroup>
+
+</Project>

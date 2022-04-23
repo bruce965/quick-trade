@@ -43,9 +43,12 @@
     <GenerateDependencyFile>false</GenerateDependencyFile>
   </PropertyGroup>
 
+  <!-- Load version properties. -->
+  <Import Project=".\SdkVersion.props" />
+
   <ItemGroup>
     <!-- Import QuickTrade plugin projects' specific packages. -->
-    <PackageReference Include="QuickTrade.Core" Version="1.0.0" />
+    <PackageReference Include="QuickTrade.Core" Version="$(QuickTradePackageVersion)" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(ImplicitUsings)' == 'true' Or '$(ImplicitUsings)' == 'enable' ">
