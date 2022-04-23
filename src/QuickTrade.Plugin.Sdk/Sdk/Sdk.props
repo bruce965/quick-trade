@@ -1,0 +1,56 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Microsoft.NET.Sdk should be imported only if it wasn't already. -->
+    <QuickTradePluginImportsMicrosoftNETSdk Condition=" '$(UsingMicrosoftNETSdk)' != 'true' ">true</QuickTradePluginImportsMicrosoftNETSdk>
+  </PropertyGroup>
+
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" Condition=" '$(QuickTradePluginImportsMicrosoftNETSdk)' == 'true' " />
+
+  <PropertyGroup>
+    <!-- Set MSBuild solution or project directory as the QuickTrade project directory. -->
+    <QuickTradeProjectDir Condition=" '$(SolutionDir)' != '' ">$(SolutionDir)</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" '$(SolutionDir)' == '' ">$(MSBuildProjectDirectory)</QuickTradeProjectDir>
+    <QuickTradeProjectDir>$([MSBuild]::EnsureTrailingSlash('$(QuickTradeProjectDir)'))</QuickTradeProjectDir>
+
+    <!-- Look for the "quicktrade.jsonc" in parent folders (the first one found stops the recursive search). -->
+    <!-- TODO: is there a way to do this more elegantly and without an arbitrary recursion limit? -->
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+    <QuickTradeProjectDir Condition=" !Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">$(QuickTradeProjectDir)..\</QuickTradeProjectDir>
+
+    <!-- Conditionally set boolean if this is a quicktrade project. -->
+    <IsQuickTradeProject />
+    <IsQuickTradeProject Condition=" Exists('$(QuickTradeProjectDir)quicktrade.jsonc') ">true</IsQuickTradeProject>
+
+    <!-- If "quicktrade.jsonc" is not found, unset the project directory. -->
+    <QuickTradeProjectDir Condition=" '$(IsQuickTradeProject)' != 'true' " />
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(IsQuickTradeProject)' == 'true' ">
+    <!-- Set plugins directory. -->
+    <!-- TODO: this value should be derived from combining $(QuickTradeProjectDir) and the "PluginsDir" field in $(QuickTradeProjectDir)\quicktrade.jsonc. -->
+    <QuickTradePluginsDir>$(QuickTradeProjectDir)plugins\</QuickTradePluginsDir>
+
+    <!-- Set default output path to the plugins directory. -->
+    <OutputPath>$(QuickTradePluginsDir)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Import QuickTrade plugin projects' specific packages. -->
+    <PackageReference Include="QuickTrade.Core" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(ImplicitUsings)' == 'true' Or '$(ImplicitUsings)' == 'enable' ">
+    <!-- If implicit usings are enabled, add QuickTrade plugin projects' usings. -->
+    <Using Include="QuickTrade.Core" />
+  </ItemGroup>
+
+</Project>
