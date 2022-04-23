@@ -5,7 +5,7 @@
     <QuickTradeAssemblyVersion>0.1.0.0</QuickTradeAssemblyVersion>
 
     <!-- This version identifier should respect Semantic Versioning 2.0.0. -->
-    <QuickTradePackageVersion>0.1.0-alpha</QuickTradePackageVersion>
+    <QuickTradePackageVersion>0.1.1-alpha</QuickTradePackageVersion>
   </PropertyGroup>
 
 </Project>

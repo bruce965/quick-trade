@@ -44,7 +44,7 @@
   </PropertyGroup>
 
   <!-- Load version properties. -->
-  <Import Project=".\SdkVersion.props" />
+  <Import Project=".\Version.props" />
 
   <ItemGroup>
     <!-- Import QuickTrade plugin projects' specific packages. -->

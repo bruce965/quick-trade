@@ -17,7 +17,7 @@
     <None Include="Sdk\Sdk.targets" Pack="true" PackagePath="Sdk" />
 
     <None Include="..\Version.props" Pack="true" PackagePath="Sdk">
-      <Link>Sdk\SdkVersion.props</Link>
+      <Link>Sdk\Version.props</Link>
     </None>
   </ItemGroup>
 
