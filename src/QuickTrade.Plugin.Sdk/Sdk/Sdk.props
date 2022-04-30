@@ -34,13 +34,20 @@
 
   <PropertyGroup Condition=" '$(IsQuickTradeProject)' == 'true' ">
     <!-- Set plugins directory. -->
-    <!-- TODO: this value should be derived from combining $(QuickTradeProjectDir) and the "PluginsDir" field in $(QuickTradeProjectDir)\quicktrade.jsonc. -->
     <QuickTradePluginsDir>$(QuickTradeProjectDir)plugins\</QuickTradePluginsDir>
 
     <!-- Set default output path to the plugins directory. -->
-    <OutputPath>$(QuickTradePluginsDir)</OutputPath>
+    <OutDir>$(QuickTradePluginsDir)</OutDir>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateDependencyFile>false</GenerateDependencyFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support#plugin-with-library-dependencies -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- Force assembly name to end with "Plugin". -->
+    <AssemblyName Condition="!$(MSBuildProjectName.EndsWith('Plugin'))">$(AssemblyName)Plugin</AssemblyName>
   </PropertyGroup>
 
   <!-- Load version properties. -->
@@ -54,6 +61,7 @@
   <ItemGroup Condition=" '$(ImplicitUsings)' == 'true' Or '$(ImplicitUsings)' == 'enable' ">
     <!-- If implicit usings are enabled, add QuickTrade plugin projects' usings. -->
     <Using Include="QuickTrade.Core" />
+    <Using Include="QuickTrade.Core.Plugins" />
   </ItemGroup>
 
 </Project>

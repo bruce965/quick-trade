@@ -14,7 +14,7 @@ class InitCommand : Command
 
 	InitCommand() : base("init")
 	{
-		Description = "Create and configure a new project";
+		Description = Strings.Command_Init;
 
 		AddOption(AcceptDefaultsOption.Instance);
 		AddOption(ForceAcceptDefaultsOption.Instance);
@@ -29,17 +29,14 @@ class InitCommand : Command
 		var config = await NewProjectCommand.RunInteractive(projectDirectory, acceptDefaults, forceAcceptDefaults);
 		if (config == null)
 		{
-			Console.Error.WriteLine("Operation cancelled.");
+			Console.Error.WriteLine(Strings.Operation_Aborted);
 			return;
 		}
 
-		if (config.PluginsDir != null)
-			projectDirectory.CreateSubdirectory(config.PluginsDir);
-
-		var createPlugin = ConsoleInteractive.AskBoolean("Do you want to create a custom plugin project?", true, acceptDefaults);
+		var createPlugin = ConsoleInteractive.AskBoolean(Strings.Command_Init_Plugin, true, acceptDefaults);
 		if (createPlugin)
 			await NewPluginCommand.RunInteractive(projectDirectory, config, acceptDefaults, forceAcceptDefaults);
 
-		Console.WriteLine("Done!");
+		Console.WriteLine(Strings.Operation_Completed);
 	}
 }

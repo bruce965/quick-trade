@@ -13,7 +13,7 @@ class MainCommand : RootCommand
 
 	MainCommand()
 	{
-		Description = "Experimental trading bot";
+		Description = Strings.Command_Main;
 
 		AddGlobalOption(ProjectDirectoryOption.Instance);
 

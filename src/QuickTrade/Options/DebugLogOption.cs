@@ -6,14 +6,14 @@ using System.CommandLine;
 
 namespace QuickTrade.Options;
 
-class AcceptDefaultsOption : Option<bool>
+class DebugLogOption : Option<bool>
 {
-	public static AcceptDefaultsOption Instance { get; } = new();
+	public static DebugLogOption Instance { get; } = new();
 
-	AcceptDefaultsOption() : base("--yes")
+	DebugLogOption() : base("--verbose")
 	{
-		Description = Strings.Option_AcceptDefaults;
+		Description = Strings.Option_DebugLog;
 
-		AddAlias("-y");
+		AddAlias("-v");
 	}
 }

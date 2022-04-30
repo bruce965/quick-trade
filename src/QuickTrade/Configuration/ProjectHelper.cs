@@ -9,14 +9,18 @@ namespace QuickTrade.Configuration;
 
 class ProjectHelper
 {
-	static readonly JsonSerializerOptions _options = new JsonSerializerOptions()
+	static readonly JsonSerializerOptions _options = new()
 	{
 		ReadCommentHandling = JsonCommentHandling.Skip,
 		AllowTrailingCommas = true,
 		WriteIndented = true,
 	};
 
+	static readonly Encoding _encoding = new UTF8Encoding(false);
+
 	public static string FileName => "quicktrade.jsonc";
+
+	public static int LatestVersion => 1;
 
 	public static string DefaultPluginsDirName => "plugins";
 
@@ -29,15 +33,15 @@ class ProjectHelper
 
 	public static async ValueTask SaveAsync(Stream stream, QuickTradeProject configuration, CancellationToken cancellationToken = default)
 	{
-		using (var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true))
+		using (var writer = new StreamWriter(stream, _encoding, leaveOpen: true))
 		{
 			// TODO: cancellationToken (currently not supported).
-			await writer.WriteLineAsync("/* QuickTrade Configuration */").ConfigureAwait(false);
+			await writer.WriteLineAsync("/* QuickTrade Project */");
 
 			await writer.FlushAsync();
 		}
 
-		await JsonSerializer.SerializeAsync(stream, configuration, _options, cancellationToken).ConfigureAwait(false);
+		await JsonSerializer.SerializeAsync(stream, configuration, _options, cancellationToken);
 	}
 
 	public static async ValueTask<QuickTradeProject?> LoadFromProjectDirectoryAsync(DirectoryInfo projectDirectory, CancellationToken cancellationToken = default)
@@ -45,18 +49,18 @@ class ProjectHelper
 		var configFile = new FileInfo(Path.Combine(projectDirectory.FullName, FileName));
 		if (!configFile.Exists)
 		{
-			Console.Error.WriteLine("Invalid project directory: no '{0}' file found.", FileName);
+			Console.Error.WriteLine(Strings.Error_InvalidProjectDirectory, FileName);
 			return null;
 		}
 
 		try
 		{
-			using (var stream = configFile.OpenRead())
-				return await LoadAsync(stream);
+			using var stream = configFile.OpenRead();
+			return await LoadAsync(stream, cancellationToken);
 		}
 		catch (JsonException e)
 		{
-			Console.Error.WriteLine("Error while parsing '{0}' configuration file: {1}", configFile.FullName, e.Message);
+			Console.Error.WriteLine(Strings.Error_InvalidProjectFile, configFile.FullName, e.Message);
 			return null;
 		}
 	}

@@ -6,7 +6,10 @@ namespace QuickTrade.Configuration;
 
 class QuickTradeProject
 {
-	public int Version { get; set; } = 1;
+	public int Version { get; set; } = ProjectHelper.LatestVersion;
 
-	public string? PluginsDir { get; set; } = "./plugins/";
+	public ICollection<string> LoadPlugins { get; set; } = new List<string>
+	{
+		$"{ProjectHelper.DefaultPluginsDirName}/*Plugin.dll",
+	};
 }

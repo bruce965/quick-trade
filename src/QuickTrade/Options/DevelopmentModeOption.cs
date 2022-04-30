@@ -6,14 +6,14 @@ using System.CommandLine;
 
 namespace QuickTrade.Options;
 
-class AcceptDefaultsOption : Option<bool>
+class DevelopmentModeOption : Option<bool>
 {
-	public static AcceptDefaultsOption Instance { get; } = new();
+	public static DevelopmentModeOption Instance { get; } = new();
 
-	AcceptDefaultsOption() : base("--yes")
+	DevelopmentModeOption() : base("--dev")
 	{
-		Description = Strings.Option_AcceptDefaults;
+		Description = Strings.Option_DevelopmentMode;
 
-		AddAlias("-y");
+		AddAlias("-D");
 	}
 }

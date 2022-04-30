@@ -3,13 +3,11 @@
 // available at https://github.com/bruce965/quick-trade/raw/master/LICENSE
 
 using QuickTrade.Configuration;
-using QuickTrade.Core.Abstractions;
 using QuickTrade.Options;
 using QuickTrade.Utilities;
 using System.CommandLine;
 using System.Reflection;
 using System.Text;
-using System.Xml;
 
 namespace QuickTrade.Commands;
 
@@ -19,7 +17,7 @@ class NewPluginCommand : Command
 
 	NewPluginCommand() : base("plugin")
 	{
-		Description = "Create a new empty plugin";
+		Description = Strings.Command_NewPlugin;
 
 		AddOption(AcceptDefaultsOption.Instance);
 		AddOption(ForceAcceptDefaultsOption.Instance);
@@ -34,20 +32,20 @@ class NewPluginCommand : Command
 		var config = await ProjectHelper.LoadFromProjectDirectoryAsync(projectDirectory);
 		if (config == null)
 		{
-			Console.WriteLine("Operation aborted.");
+			Console.WriteLine(Strings.Operation_Aborted);
 			return;
 		}
 
 		await RunInteractive(projectDirectory, config, acceptDefaults, forceAcceptDefaults);
 
-		Console.WriteLine("Done!");
+		Console.WriteLine(Strings.Operation_Completed);
 	}
 
 	public static async Task RunInteractive(DirectoryInfo projectDirectory, QuickTradeProject config, bool acceptDefaults, bool forceAcceptDefaults)
 	{
-		var pluginName = ConsoleInteractive.AskString("Plugin name:", "MyPlugin", acceptDefaults);
+		var pluginName = ConsoleInteractive.AskString(Strings.Command_NewPlugin_Name, Strings.Command_NewPlugin_Name_Default, acceptDefaults);
 
-		var projectPath = ConsoleInteractive.AskString("Project path:", $"{EnsureTrailingSlash(config.PluginsDir ?? ProjectHelper.DefaultPluginsDirName)}{pluginName}/{pluginName}.csproj", acceptDefaults);
+		var projectPath = ConsoleInteractive.AskString(Strings.Command_NewPlugin_Path, $"{EnsureTrailingSlash(ProjectHelper.DefaultPluginsDirName)}{pluginName}/{pluginName}.csproj", acceptDefaults);
 		if (!projectPath.EndsWith(".csproj"))
 			projectPath += ".csproj";
 
@@ -61,10 +59,10 @@ class NewPluginCommand : Command
 		var slnFile = projectDirectory.EnumerateFiles("*.sln").FirstOrDefault();
 		if (slnFile == null)
 		{
-			var createSolution = ConsoleInteractive.AskBoolean("Create a new solution?", true, acceptDefaults);
+			var createSolution = ConsoleInteractive.AskBoolean(Strings.Command_NewPlugin_Solution, true, acceptDefaults);
 			if (createSolution)
 			{
-				var solutionName = ConsoleInteractive.AskString("Solution name:", "MyPlugins.sln", acceptDefaults);
+				var solutionName = ConsoleInteractive.AskString(Strings.Command_NewPlugin_Solution_Name, Strings.Command_NewPlugin_Solution_Name_Default, acceptDefaults);
 				if (!solutionName.EndsWith(".sln"))
 					solutionName += ".sln";
 
@@ -82,7 +80,7 @@ class NewPluginCommand : Command
 			{
 				// TODO: check if project is already in the solution and avoid adding it again.
 
-				addToSolution = ConsoleInteractive.AskBoolean($"Add project to existing solution '{slnFile.Name}'?", true, acceptDefaults);
+				addToSolution = ConsoleInteractive.AskBoolean(string.Format(Strings.Command_NewPlugin_AddToSolution, slnFile.Name), true, acceptDefaults);
 			}
 
 			if (addToSolution)
@@ -102,7 +100,7 @@ class NewPluginCommand : Command
 				$@"<Project Sdk=""QuickTrade.Plugin.Sdk/{GetSdkVersion()}"">",
 				@"",
 				@"  <PropertyGroup>",
-				(pluginName == Path.GetFileNameWithoutExtension(csprojFile.FullName)) ? null : $@"    <AssemblyName>{EscapeXml(pluginName)}</AssemblyName>",
+				(pluginName == Path.GetFileNameWithoutExtension(csprojFile.FullName)) ? null : $@"    <AssemblyName>{pluginName.ToXmlEscaped()}</AssemblyName>",
 				@"    <TargetFramework>net6.0</TargetFramework>",
 				@"    <ImplicitUsings>enable</ImplicitUsings>",
 				@"    <Nullable>enable</Nullable>",
@@ -115,45 +113,50 @@ class NewPluginCommand : Command
 				await writer.WriteLineAsync(line);
 
 			await writer.FlushAsync();
-			await stream.FlushAsync();
+			await stream.FlushAsync(cancellationToken);
 
 			stream.SetLength(stream.Position);
 		}
 
-		var class1File = new FileInfo(Path.Combine(csprojFile.Directory!.FullName, "Class1.cs"));
+		var class1File = new FileInfo(Path.Combine(csprojFile.Directory!.FullName, "Startup.cs"));
 		if (!class1File.Exists)
 		{
-			using (var stream = class1File.OpenWrite())
-			using (var writer = new StreamWriter(stream, new UTF8Encoding(false)))
+			using var stream = class1File.OpenWrite();
+			using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+
+			var lines = new[]
 			{
-				var lines = new[]
-				{
-					$"namespace {StringCasing.ToCSharpName(pluginName)};",
-					"",
-					"public class Class1",
-					"{",
-					"",
-					"}",
-				};
+				"using Microsoft.Extensions.DependencyInjection;",
+				"",
+				$"namespace {StringCasing.ToCSharpName(pluginName)};",
+				"",
+				(StringCasing.ToCSharpName(pluginName) == pluginName) ? "[QuickTradePlugin]" : $"[QuickTradePlugin({pluginName.ToCSharpStringLiteral()})]",
+				"public class Startup : IPluginStartup",
+				"{",
+				"    public void ConfigureServices(IServiceCollection services)",
+				"    {",
+				$"        // {Strings.Command_NewPlugin_ConfigureServices}",
+				"    }",
+				"}",
+			};
 
-				foreach (var line in lines)
-					await writer.WriteLineAsync(line);
+			foreach (var line in lines)
+				await writer.WriteLineAsync(line);
 
-				await writer.FlushAsync();
-				await stream.FlushAsync();
+			await writer.FlushAsync();
 
-				stream.SetLength(stream.Position);
-			}
+			stream.SetLength(stream.Position);
+			await stream.FlushAsync(cancellationToken);
 		}
 	}
 
 	static async Task CreateSlnAsync(FileInfo slnFile, CancellationToken cancellationToken = default)
 	{
-		using (var stream = slnFile.OpenWrite())
-		using (var writer = new StreamWriter(stream, new UTF8Encoding(false)))
+		using var stream = slnFile.OpenWrite();
+		using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+
+		var lines = new[]
 		{
-			var lines = new[]
-			{
 				@"Microsoft Visual Studio Solution File, Format Version 12.00",
 				@"# Visual Studio Version 16",
 				@"VisualStudioVersion = 16.0.30114.105",
@@ -169,14 +172,13 @@ class NewPluginCommand : Command
 				@"EndGlobal",
 			};
 
-			foreach (var line in lines)
-				await writer.WriteLineAsync(line);
+		foreach (var line in lines)
+			await writer.WriteLineAsync(line);
 
-			await writer.FlushAsync();
-			await stream.FlushAsync();
+		await writer.FlushAsync();
 
-			stream.SetLength(stream.Position);
-		}
+		stream.SetLength(stream.Position);
+		await stream.FlushAsync(cancellationToken);
 	}
 
 	static async Task AddToSlnAsync(FileInfo slnFile, FileInfo csprojFile, string pluginName, CancellationToken cancellationToken = default)
@@ -219,47 +221,46 @@ class NewPluginCommand : Command
 				return (Left: split.Length > 0 ? split[0] : "", Right: split.Length > 1 ? split[1] : "");
 			});
 
-		using (var stream = slnFile.OpenWrite())
-		using (var writer = new StreamWriter(stream, new UTF8Encoding(false)))
+		using var stream = slnFile.OpenWrite();
+		using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+
+		foreach (var line in beforeGlobal)
+			await writer.WriteLineAsync(line);
+
+		await writer.WriteLineAsync(@$"Project(""{{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}}"") = ""{pluginName}"", ""{projectRelativePath}"", ""{projectGuid.ToString("B").ToUpper()}""");
+		await writer.WriteLineAsync("EndProject");
+
+		foreach (var line in beforeProjectConfigurationPlatforms)
+			await writer.WriteLineAsync(line);
+
+		foreach (var line in endOfProjectConfigurationPlatforms)
+			await writer.WriteLineAsync(line);
+
+		if (!hasProjectConfigurationPlatforms)
+			await writer.WriteLineAsync("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
+
+		foreach (var (left, right) in solutionConfigurationPlatforms)
 		{
-			foreach (var line in beforeGlobal)
-				await writer.WriteLineAsync(line);
-
-			await writer.WriteLineAsync(@$"Project(""{{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}}"") = ""{pluginName}"", ""{projectRelativePath}"", ""{projectGuid.ToString("B").ToUpper()}""");
-			await writer.WriteLineAsync("EndProject");
-
-			foreach (var line in beforeProjectConfigurationPlatforms)
-				await writer.WriteLineAsync(line);
-
-			foreach (var line in endOfProjectConfigurationPlatforms)
-				await writer.WriteLineAsync(line);
-
-			if (!hasProjectConfigurationPlatforms)
-				await writer.WriteLineAsync("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
-
-			foreach (var (left, right) in solutionConfigurationPlatforms)
-			{
-				await writer.WriteLineAsync($"\t\t{projectGuid.ToString("B").ToUpper()}.{left}.ActiveCfg = {right}");
-				await writer.WriteLineAsync($"\t\t{projectGuid.ToString("B").ToUpper()}.{left}.Build.0 = {right}");
-			}
-
-			if (!hasProjectConfigurationPlatforms)
-				await writer.WriteLineAsync("\tEndGlobalSection");
-
-			foreach (var line in rest)
-				await writer.WriteLineAsync(line);
-
-			await writer.FlushAsync();
-			await stream.FlushAsync();
-
-			stream.SetLength(stream.Position);
+			await writer.WriteLineAsync($"\t\t{projectGuid.ToString("B").ToUpper()}.{left}.ActiveCfg = {right}");
+			await writer.WriteLineAsync($"\t\t{projectGuid.ToString("B").ToUpper()}.{left}.Build.0 = {right}");
 		}
+
+		if (!hasProjectConfigurationPlatforms)
+			await writer.WriteLineAsync("\tEndGlobalSection");
+
+		foreach (var line in rest)
+			await writer.WriteLineAsync(line);
+
+		await writer.FlushAsync();
+
+		stream.SetLength(stream.Position);
+		await stream.FlushAsync(cancellationToken);
 	}
 
 	static string GetSdkVersion()
 	{
 		// assuming SDK version matches the core library version
-		var coreLibrary = typeof(UnixTimestamp).Assembly;
+		var coreLibrary = typeof(QuickTrade.Core.UnixTimestamp).Assembly;
 		var coreVersion = coreLibrary.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
 		var split = coreVersion.Split('+', 2);
 		return split.First();
@@ -271,14 +272,5 @@ class NewPluginCommand : Command
 			return path + Path.DirectorySeparatorChar;
 
 		return path;
-	}
-
-	static string EscapeXml(string value)
-	{
-		var el = new XmlDocument().CreateElement("x");
-		el.InnerText = value;
-
-		var outerXml = el.OuterXml;
-		return outerXml.Substring("<x>".Length, outerXml.Length - "<x></x>".Length);
 	}
 }

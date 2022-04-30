@@ -16,7 +16,7 @@ class NewProjectCommand : Command
 
 	NewProjectCommand() : base("project")
 	{
-		Description = "Create a new empty project";
+		Description = Strings.Command_NewProject;
 
 		AddOption(AcceptDefaultsOption.Instance);
 		AddOption(ForceAcceptDefaultsOption.Instance);
@@ -31,16 +31,16 @@ class NewProjectCommand : Command
 		var project = await RunInteractive(projectDirectory, acceptDefaults, forceAcceptDefaults);
 		if (project == null)
 		{
-			Console.Error.WriteLine("Operation cancelled.");
+			Console.Error.WriteLine(Strings.Operation_Aborted);
 			return;
 		}
 
-		Console.WriteLine("Done!");
+		Console.WriteLine(Strings.Operation_Completed);
 	}
 
 	public static async Task<QuickTradeProject?> RunInteractive(DirectoryInfo projectDirectory, bool acceptDefaults, bool forceAcceptDefaults, CancellationToken cancellationToken = default)
 	{
-		Console.Error.WriteLine("Creating a new project in: {0}", projectDirectory.FullName);
+		Console.Error.WriteLine(Strings.Command_NewProject_Path, projectDirectory.FullName);
 
 		if (!EnsureProjectDirectoryEmpty(projectDirectory, forceAcceptDefaults))
 			return null;
@@ -56,7 +56,7 @@ class NewProjectCommand : Command
 	{
 		if (projectDirectory.Exists && projectDirectory.EnumerateFileSystemInfos().Any())
 		{
-			var forceContinue = ConsoleInteractive.AskBoolean("Project directory is not empty, do you want to proceed anyways?", forceAcceptDefaults, forceAcceptDefaults);
+			var forceContinue = ConsoleInteractive.AskBoolean(Strings.Command_NewProject_NotEmpty, forceAcceptDefaults, forceAcceptDefaults);
 			if (!forceContinue)
 				return false;
 		}
@@ -73,14 +73,14 @@ class NewProjectCommand : Command
 		{
 			try
 			{
-				using (var stream = configFile.OpenRead())
-					config = await ProjectHelper.LoadAsync(stream);
+				using var stream = configFile.OpenRead();
+				config = await ProjectHelper.LoadAsync(stream, cancellationToken);
 			}
 			catch (JsonException e)
 			{
-				Console.Error.WriteLine("Error while parsing existing '{0}' configuration file: {0}", e.Message);
+				Console.Error.WriteLine(Strings.Error_InvalidProjectFile, configFile.FullName, e.Message);
 
-				var forceContinue = ConsoleInteractive.AskBoolean("Existing configuration is not valid, do you want to overwrite it?", forceAcceptDefaults, forceAcceptDefaults);
+				var forceContinue = ConsoleInteractive.AskBoolean(Strings.Command_NewProject_OverwiteInvalidProject, forceAcceptDefaults, forceAcceptDefaults);
 				if (!forceContinue)
 					return null;
 			}
@@ -91,11 +91,10 @@ class NewProjectCommand : Command
 
 		using (var stream = configFile.OpenWrite())
 		{
-			await ProjectHelper.SaveAsync(stream, config);
-
-			await stream.FlushAsync();
+			await ProjectHelper.SaveAsync(stream, config, cancellationToken);
 
 			stream.SetLength(stream.Position);
+			await stream.FlushAsync(cancellationToken);
 		}
 
 		return config;
